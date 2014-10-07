@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+ <title>Exercice canvas</title>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
+</head>
+
+<body>
+ <canvas id='id_canvas' width='400' height='400'></canvas>
+ <script type='text/javascript'>
+
+ var canvas = document.getElementById('id_canvas');
+ if (canvas.getContext) {
+ var ctx=canvas.getContext('2d');
+
+function cross(origin,point1,point2) {
+	origin = Scene.render(origin);
+	point1 = Scene.render(point1);
+	point2 = Scene.render(point2);
+
+	return (point1.x*point2.y-point1.y*point2.x);
+}
+
+function deg2rad(a) {
+	return (a/180)*Math.PI;
+}
+
+function Point(x,y,z) {
+	return {x:x, y:y, z:z, u:x, v:y};
+}
+
+ctx.translate(200,200);
+
+var Scene = {
+	angle_x:0,
+	angle_y:0,
+	angle_z:0,
+
+	rotate: function(x,y,z) {
+		this.angle_x += x*1;
+		this.angle_y += y*1;
+		this.angle_z += z*1;
+	},
+
+	render: function(point) {
+		point = Point(point.x, point.y, point.z);
+
+		point = Point(
+			point.x,
+			(Math.sin(Scene.angle_x)*point.z+Math.cos(Scene.angle_x)*point.y),
+			(Math.cos(Scene.angle_x)*point.z-Math.sin(Scene.angle_x)*point.y)
+		);
+
+		point = Point(
+			(Math.cos(Scene.angle_y)*point.x-Math.sin(Scene.angle_y)*point.z),
+			point.y,
+			(Math.sin(Scene.angle_y)*point.x+Math.cos(Scene.angle_y)*point.z)
+		);
+
+		point = Point(
+			(Math.cos(-Scene.angle_z)*point.x-Math.sin(-Scene.angle_z)*point.y),
+			(Math.sin(-Scene.angle_z)*point.x+Math.cos(-Scene.angle_z)*point.y),
+			point.z
+		);
+
+		return Point(point.x, point.y, point.z);
+	}
+};
+
+function drawAxis(X,Y,Z) {
+	Y = -Y;
+
+	ctx.beginPath();
+	ctx.moveTo(0,0);
+	ctx.lineTo(X,Y);
+	ctx.stroke();
+
+	x = X/10;
+	y = Y/10;
+
+	diff_x = -y/2;
+	diff_y = x/2;
+
+	for(var i=1;i<9;i++) {
+		ctx.beginPath();
+		ctx.moveTo(i*x+diff_x,i*y+diff_y);
+		ctx.lineTo(i*x-diff_x,i*y-diff_y);
+		ctx.stroke();
+	}
+
+	ctx.beginPath();
+	ctx.moveTo(X,Y);
+	ctx.lineTo(X-x+diff_x,Y-y+diff_y);
+	ctx.lineTo(X-x-diff_x,Y-y-diff_y);
+	ctx.closePath();
+	ctx.fill();
+}
+
+function drawLine3D(point1, point2) {
+	ctx.beginPath();
+	ctx.moveTo(point1.u, -point1.v);
+	ctx.lineTo(point2.u, -point2.v);
+	ctx.stroke();
+}
+
+function drawSystem() {
+	Scene.rotate(0, 0.02, 0);
+
+	center = Point(0,0,0);
+
+	a_x = Scene.render(Point(100,0,0));
+	a_y = Scene.render(Point(0,100,0));
+	a_z = Scene.render(Point(0,0,100));
+
+	ctx.clearRect(-200,-200,400,400);
+
+	ctx.lineWidth = 1;
+
+
+	ctx.fillStyle = "#999";
+	ctx.strokeStyle = "#333";
+
+	for(face in faces) {
+		//if(cross(vertices[faces[face][0]], vertices[faces[face][1]], vertices[faces[face][2]]) > 0) {
+			ctx.beginPath();
+			for(vertex in faces[face]) {
+				if(!vertices[faces[face][vertex]]) {
+					//alert(faces[face][vertex]);
+					continue;
+				}
+
+				perspective = 500;
+
+				point = Scene.render(vertices[faces[face][vertex]]);
+				if(vertex == 0)
+					ctx.moveTo(point.u*(1+point.z/perspective), -point.v*(1+point.z/perspective));
+				else
+					ctx.lineTo(point.u*(1+point.z/perspective), -point.v*(1+point.z/perspective));
+			}
+			ctx.stroke();
+			ctx.fill();
+		//}
+	}
+
+		ctx.strokeStyle = "red";
+	drawLine3D(center, a_x);
+
+	ctx.strokeStyle = "green";
+	drawLine3D(center, a_y);
+
+	ctx.strokeStyle = "blue";
+	drawLine3D(center, a_z);
+
+}
+
+vertices = [];
+faces = [];
+
+$.get("Monkey.obj", function(data) {
+	data = data.split(/\n/);
+
+	for(line in data) {
+		if(data[line].charAt(0) == "v") {
+			coords = data[line].split(/\s+/);
+			vertices.push(Point(coords[1]*100,coords[2]*100,coords[3]*100));
+		} else if(data[line].charAt(0) == "f") {
+			face_data = data[line].split(/\s+/);
+			final_face = [];
+			for(face in face_data) {
+				if(face_data[face].match(/\d+/)) {
+					final_face.push(face_data[face]-1);
+				}
+			}
+			faces.push(final_face);
+		}
+	}
+
+	drawSystem();
+
+	Scene.rotate(Math.PI/2, 0, 0);
+	setInterval(drawSystem, 1000/29);
+});
+
+}
+</script>
+</body>
+</html>
