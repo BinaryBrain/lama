@@ -36,6 +36,7 @@ var Scene = {
 	angle_x:0,
 	angle_y:0,
 	angle_z:0,
+	perspective: 500,
 
 	rotate: function(x,y,z) {
 		this.angle_x += x*1;
@@ -105,7 +106,7 @@ function drawLine3D(point1, point2) {
 }
 
 function drawSystem() {
-	Scene.rotate(0, 0.02, 0);
+	Scene.rotate(0.00, 0.01, 0.00);
 
 	center = Point(0,0,0);
 
@@ -117,33 +118,58 @@ function drawSystem() {
 
 	ctx.lineWidth = 1;
 
-
 	ctx.fillStyle = "#999";
 	ctx.strokeStyle = "#333";
 
+	var renderedFaces = [];
+
 	for(face in faces) {
-		//if(cross(vertices[faces[face][0]], vertices[faces[face][1]], vertices[faces[face][2]]) > 0) {
-			ctx.beginPath();
-			for(vertex in faces[face]) {
-				if(!vertices[faces[face][vertex]]) {
-					//alert(faces[face][vertex]);
-					continue;
-				}
+		renderedFaces[face] = [];
 
-				perspective = 500;
-
-				point = Scene.render(vertices[faces[face][vertex]]);
-				if(vertex == 0)
-					ctx.moveTo(point.u*(1+point.z/perspective), point.v*(1+point.z/perspective));
-				else
-					ctx.lineTo(point.u*(1+point.z/perspective), point.v*(1+point.z/perspective));
+		for(vertex in faces[face]) {
+			if(!vertices[faces[face][vertex]]) {
+				continue;
 			}
-			ctx.stroke();
-			//ctx.fill();
-		//}
+
+			var point = Scene.render(vertices[faces[face][vertex]]);
+			renderedFaces[face][vertex] = point;
+		}
 	}
 
-		ctx.strokeStyle = "red";
+	renderedFaces.sort(function (faceA, faceB) {
+		var sumA = 0;
+		var sumB = 0;
+		var lengthA = faceA.length;
+		var lengthB = faceB.length;
+
+		for(var i = 0; i < lengthA; i++) {
+			sumA += faceA[i].z;
+		}
+		for(var i = 0; i < lengthB; i++) {
+			sumB += faceB[i].z;
+		}
+
+		return (sumA/lengthA) - (sumB/lengthB);
+	})
+
+	for(face in renderedFaces) {
+		ctx.beginPath();
+
+		for(vertex in renderedFaces[face]) {
+			var point = renderedFaces[face][vertex];
+
+			if(vertex == 0)
+				ctx.moveTo(point.u*(1+point.z/Scene.perspective), point.v*(1+point.z/Scene.perspective));
+			else
+				ctx.lineTo(point.u*(1+point.z/Scene.perspective), point.v*(1+point.z/Scene.perspective));
+
+		}
+
+		ctx.stroke();
+		ctx.fill();
+	}
+
+	ctx.strokeStyle = "red";
 	drawLine3D(center, a_x);
 
 	ctx.strokeStyle = "green";
@@ -156,38 +182,17 @@ function drawSystem() {
 
 vertices = [];
 faces = [];
-/*
-$.get("cube-normals.obj", function(data) {
-	data = data.split(/\n/);
-
-	for(line in data) {
-		if(data[line].charAt(0) == "v") {
-			coords = data[line].split(/\s+/);
-			vertices.push(Point(coords[1]*100,coords[2]*100,coords[3]*100));
-		} else if(data[line].charAt(0) == "f") {
-			face_data = data[line].split(/\s+/);
-			final_face = [];
-			for(face in face_data) {
-				if(face_data[face].match(/\d+/)) {
-					final_face.push(face_data[face]-1);
-				}
-			}
-			faces.push(final_face);
-		}
-	}
-
-	drawSystem();
-
-	Scene.rotate(Math.PI/2, 0, 0);
-	setInterval(drawSystem, 1000/29);
-});
-*/
 
 $.get("monkey.obj", function(data) {
 	data = data.split(/\n/);
 
 	for(line in data) {
-		var lineArray = data[line].split(/\s+/);
+		var lineArray = data[line].split(/[ \t]+/);
+		
+		if(lineArray.length === 0) {
+			continue;
+		}
+
 		var key = lineArray.shift();
 		var values = lineArray;
 
@@ -239,7 +244,7 @@ $.get("monkey.obj", function(data) {
 	drawSystem();
 
 	Scene.rotate(Math.PI/2, 0, 0);
-	setInterval(drawSystem, 1000/29);
+	setInterval(drawSystem, 1000/60);
 });
 
 }
