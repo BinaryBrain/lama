@@ -7,7 +7,7 @@
 </head>
 
 <body>
- <canvas id='id_canvas' width='400' height='400'></canvas>
+ <canvas id='id_canvas' width='600' height='600'></canvas>
  <script type='text/javascript'>
 
  var canvas = document.getElementById('id_canvas');
@@ -30,7 +30,7 @@ function Point(x,y,z) {
 	return {x:x, y:y, z:z, u:x, v:y};
 }
 
-ctx.translate(200,200);
+ctx.translate(300, 300);
 
 var Scene = {
 	angle_x:0,
@@ -69,44 +69,15 @@ var Scene = {
 	}
 };
 
-function drawAxis(X,Y,Z) {
-	Y = -Y;
-
-	ctx.beginPath();
-	ctx.moveTo(0,0);
-	ctx.lineTo(X,Y);
-	ctx.stroke();
-
-	x = X/10;
-	y = Y/10;
-
-	diff_x = -y/2;
-	diff_y = x/2;
-
-	for(var i=1;i<9;i++) {
-		ctx.beginPath();
-		ctx.moveTo(i*x+diff_x,i*y+diff_y);
-		ctx.lineTo(i*x-diff_x,i*y-diff_y);
-		ctx.stroke();
-	}
-
-	ctx.beginPath();
-	ctx.moveTo(X,Y);
-	ctx.lineTo(X-x+diff_x,Y-y+diff_y);
-	ctx.lineTo(X-x-diff_x,Y-y-diff_y);
-	ctx.closePath();
-	ctx.fill();
-}
-
 function drawLine3D(point1, point2) {
 	ctx.beginPath();
-	ctx.moveTo(point1.u, -point1.v);
-	ctx.lineTo(point2.u, -point2.v);
+	ctx.moveTo(point1.u, point1.v);
+	ctx.lineTo(point2.u, point2.v);
 	ctx.stroke();
 }
 
 function drawSystem() {
-	Scene.rotate(0.00, 0.01, 0.00);
+	Scene.rotate(0, 0.01, 0);
 
 	center = Point(0,0,0);
 
@@ -114,7 +85,7 @@ function drawSystem() {
 	a_y = Scene.render(Point(0,100,0));
 	a_z = Scene.render(Point(0,0,100));
 
-	ctx.clearRect(-200,-200,400,400);
+	ctx.clearRect(-300, -300, 600, 600);
 
 	ctx.lineWidth = 1;
 
@@ -183,7 +154,7 @@ function drawSystem() {
 vertices = [];
 faces = [];
 
-$.get("monkey.obj", function(data) {
+$.get("a320.obj", function(data) {
 	data = data.split(/\n/);
 
 	for(line in data) {
@@ -231,20 +202,22 @@ $.get("monkey.obj", function(data) {
 		case 'usemtl':
 			// usemtl
 			break;
-
+		case 's':
+			// smooth
+			break;
 		case '':
 			break;
 
 		default:
-			console.log("unsupported symbol:", key);
+			console.warn("unsupported symbol:", key);
 			break;
 		}
 	}
 
 	drawSystem();
 
-	Scene.rotate(Math.PI/2, 0, 0);
-	setInterval(drawSystem, 1000/60);
+	Scene.rotate(Math.PI+Math.PI/8, 0, 0);
+	setInterval(drawSystem, 1000/30);
 });
 
 }
