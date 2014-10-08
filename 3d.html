@@ -134,12 +134,12 @@ function drawSystem() {
 
 				point = Scene.render(vertices[faces[face][vertex]]);
 				if(vertex == 0)
-					ctx.moveTo(point.u*(1+point.z/perspective), -point.v*(1+point.z/perspective));
+					ctx.moveTo(point.u*(1+point.z/perspective), point.v*(1+point.z/perspective));
 				else
-					ctx.lineTo(point.u*(1+point.z/perspective), -point.v*(1+point.z/perspective));
+					ctx.lineTo(point.u*(1+point.z/perspective), point.v*(1+point.z/perspective));
 			}
 			ctx.stroke();
-			ctx.fill();
+			//ctx.fill();
 		//}
 	}
 
@@ -183,7 +183,7 @@ $.get("cube-normals.obj", function(data) {
 });
 */
 
-$.get("cube-normals.obj", function(data) {
+$.get("monkey.obj", function(data) {
 	data = data.split(/\n/);
 
 	for(line in data) {
